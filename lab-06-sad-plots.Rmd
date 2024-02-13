@@ -153,7 +153,10 @@ staff_long %>%
 
 2.  Suppose the objective of this plot was to show that the proportion of part-time faculty have gone up over time compared to other instructional staff types.
     What changes would you propose making to this plot to tell this story and why.
-
+    
+**Answer:**
+I would propose making only the Part-time faculty colored on the visualization to highlight its movement above others.
+    
 3.  Implement the changes you proposed in the previous exercise.
 
 ```{r fig.width = 10, fig.fullwidth = TRUE}
@@ -188,13 +191,95 @@ knitr::include_graphics("img/fisheries.png")
 
 4.  Can you help them make improve it? First, brainstorm how you would improve it. Then create the improved visualization and write up the changes/decisions you made as bullet points. It's ok if some of your improvements are aspirational, i.e. you don't know how to implement it, but you think it's a good idea.
 
+**Answer:**
+The way I would propose improving the prior visualization is to remove the pie charts and pool each of the countries with more than 1,000,000 tons into their respective continents. Once I accomplish this I would allow free scales for each continent for easier viewing on a histogram graph.
+
 Load the data.
 
-```{r load-data-fisheries, eval = FALSE}
+```{r load-data-fisheries, eval = TRUE}
 fisheries <- read_csv("data/fisheries.csv")
 ```
 
+```{r}
+fisheries %>%
+  filter(total >= 1000000) %>%
+  mutate(country = fct_reorder(country, aquaculture, min)) %>%
+  select(-total) %>%
+  pivot_longer(cols = -country, names_to = "type") %>%
+    ggplot(aes(y=country, x=value, fill = type)) +
+    geom_bar(stat = "identity", position = "fill") +
+    scale_fill_manual(values = c("#9ecae1", "#3182bd")) +
+    theme(legend.title = element_blank()) +
+    theme(legend.position = "top") +
+    labs(title = "Fishing by Country",
+         x = "Proportion",
+         y = "Country")
+
+```
+
 5.  Create a new data visualisation for these data that implements the improvements you proposed in the previous exercise (or many of them as you can).
+
+```{r}
+map_to_continent <- function(country) {
+  country_to_continent <- c(
+    "China" = "Asia",
+    "Indonesia" = "Asia",
+    "India" = "Asia",
+    "Vietnam" = "Asia",
+    "Bangladesh" = "Asia",
+    "Philippines" = "Asia",
+    "South Korea" = "Asia",
+    "Egypt" = "Africa",
+    "Norway" = "Europe",
+    "Japan" = "Asia",
+    "Chile" = "South America",
+    "Myanmar" = "Asia",
+    "Thailand" = "Asia",
+    "Brazil" = "South America",
+    "Ecuador" = "South America",
+    "United States" = "North America",
+    "Malaysia" = "Asia",
+    "Iran" = "Asia",
+    "Nigeria" = "Africa",
+    "Spain" = "Europe",
+    "Mexico" = "North America",
+    "Canada" = "North America",
+    "Russia" = "Europe",
+    "Peru" = "South America",
+    "Iceland" = "Europe",
+    "Morocco" = "Africa"
+  )
+  continent <- country_to_continent[country]
+  return(continent)
+}
+
+fisheries_filtered <- fisheries %>%
+  filter(total >= 1000000)
+
+fisheries_aggregated <- fisheries_filtered %>%
+  group_by(continent = map_to_continent(country)) %>%
+  summarise(total_fishing = sum(total))
+
+ggplot(fisheries_aggregated, aes(x = continent, y = total_fishing, fill = continent)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c(
+    "Asia" = "red",
+    "Europe" = "blue",
+    "Africa" = "green",
+    "North America" = "yellow",
+    "South America" = "pink"
+  )) +
+  labs(title = "Fishing by Continent (Countries > 1,000,000 tons)",
+       x = "Continent",
+       y = "Total Fishing (tons)") +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  coord_flip()
+
+```
+
+**Answer:**
+My attempt to make the visual easier to read did not work but was a fun attempt. In pooling the countries into continents I did not know how to display easy continent as a separate graph. However, it is interesting to see the prevelance of Asia in comparison to all other continents.
 
 🧶 ✅ ⬆️ Knit, *commit, and push your changes to GitHub with an appropriate commit message. Make sure to commit and push all changed files so that your Git pane is cleared up afterwards and review the md document on GitHub to make sure you're happy with the final state of your work.*
 
